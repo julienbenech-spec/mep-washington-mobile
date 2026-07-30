@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mise en place Washington</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f5f0;
+      --panel: #ffffff;
+      --ink: #17211d;
+      --muted: #66736c;
+      --line: #d8ded8;
+      --field: #fff7c9;
+      --accent: #116241;
+      --accent-2: #e9692c;
+      --soft: #e8f2ec;
+      --shadow: 0 8px 28px rgba(23, 33, 29, .10);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.35;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      padding: max(14px, env(safe-area-inset-top)) 14px 12px;
+      background: rgba(246, 245, 240, .96);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(14px);
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+
+    .top-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      align-items: end;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    input, textarea, select, button {
+      font: inherit;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      min-height: 42px;
+      padding: 9px 10px;
+      outline: none;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(17, 98, 65, .16);
+    }
+
+    main {
+      padding: 12px 12px 96px;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .toolbar button, .actions button {
+      border: 0;
+      border-radius: 8px;
+      min-height: 44px;
+      padding: 10px 12px;
+      font-weight: 800;
+      color: #fff;
+      background: var(--accent);
+      box-shadow: var(--shadow);
+    }
+
+    .toolbar button.secondary, .actions button.secondary {
+      color: var(--ink);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: none;
+    }
+
+    .status {
+      min-height: 24px;
+      margin: 8px 0 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .section-title {
+      margin: 18px 0 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      color: #fff;
+      background: var(--accent);
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(23, 33, 29, .04);
+    }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 11px;
+      background: var(--soft);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .product {
+      min-width: 0;
+      font-size: 16px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .dim {
+      flex: 0 0 auto;
+      padding: 4px 7px;
+      border-radius: 7px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      border: 1px solid var(--line);
+    }
+
+    .fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 10px;
+    }
+
+    .field input {
+      background: var(--field);
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .notes {
+      margin-top: 14px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    .actions {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 10px 12px max(10px, env(safe-area-inset-bottom));
+      background: rgba(246, 245, 240, .96);
+      border-top: 1px solid var(--line);
+      backdrop-filter: blur(14px);
+    }
+
+    @media (min-width: 680px) {
+      h1 { font-size: 24px; }
+      .fields { grid-template-columns: repeat(4, 1fr); }
+      .toolbar { grid-template-columns: 1fr auto auto; }
+      .actions {
+        left: 50%;
+        transform: translateX(-50%);
+        max-width: 760px;
+        border: 1px solid var(--line);
+        border-bottom: 0;
+        border-radius: 8px 8px 0 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mise en place Washington</h1>
+    <div class="top-grid">
+      <div>
+        <label for="date">Date du jour</label>
+        <input id="date" type="date">
+      </div>
+      <div>
+        <label for="service">Service</label>
+        <select id="service">
+          <option>Journee</option>
+          <option>Midi</option>
+          <option>Soir</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="toolbar">
+      <select id="sectionFilter" aria-label="Filtrer par section">
+        <option value="">Toutes les sections</option>
+      </select>
+      <button class="secondary" id="clearEmpty" type="button">Masquer vides</button>
+      <button class="secondary" id="showAll" type="button">Tout afficher</button>
+    </div>
+    <div class="status" id="status">Sauvegarde automatique active.</div>
+    <div id="items"></div>
+    <div class="notes">
+      <label for="notes">Notes generales</label>
+      <textarea id="notes" placeholder="Rupture, commentaire cuisine, doute..."></textarea>
+    </div>
+  </main>
+
+  <div class="actions">
+    <button id="exportCsv" type="button">Exporter CSV</button>
+    <button class="secondary" id="resetDay" type="button">Nouveau jour</button>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "ilia-mep-washington-v1";
+    const PRODUCTS = [
+      ["BASE FROIDE", "QUINOA", "1/3"],
+      ["BASE FROIDE", "TABOULEH", "1/3"],
+      ["BASE FROIDE", "LENTILLES", "1/3"],
+      ["BASE FROIDE", "MESCLUN/ROMAINE", "1/1"],
+      ["BASE CHAUD", "RIZ ROUGE", "1/2"],
+      ["BASE CHAUD", "FREGOLA", "1/2"],
+      ["FROID TOPPINGS", "BURRATA", "1/4"],
+      ["FROID TOPPINGS", "THON", "1/4"],
+      ["FROID TOPPINGS", "BOEUF SNAKE", "1/4"],
+      ["FROID TOPPINGS", "AVOCAT", "1/4"],
+      ["FROID TOPPINGS", "TOMATES CERISES", "1/4"],
+      ["FROID TOPPINGS", "CITRON", "1/4"],
+      ["FROID TOPPINGS", "HERBES", "1/6"],
+      ["FROID TOPPINGS", "OLIVES", "1/6"],
+      ["FROID TOPPINGS", "GRENADE", "1/6"],
+      ["FROID TOPPINGS", "FETA", "1/4"],
+      ["FROID TOPPINGS", "POIS CHICHE", "1/4"],
+      ["FROID TOPPINGS", "OEUF", "1/4"],
+      ["FROID TOPPINGS", "PICKLES DE CHOU ROUGE", "1/6"],
+      ["FROID TOPPINGS", "PICKLES OIGNONS", "1/6"],
+      ["FROID TOPPINGS", "CAVIAR D'AUBERGINES", "1/6"],
+      ["FROID TOPPINGS", "LABNE", "1/6"],
+      ["FROID TOPPINGS", "YAOURT GREC", "1/6"],
+      ["FROID TOPPINGS", "TZATZIKI", "1/6"],
+      ["FROID TOPPINGS", "HOUMMOUS", "1/6"],
+      ["FROID TOPPINGS", "CAROTTE", "1/6"],
+      ["FROID TOPPINGS", "CONCOMBRE", "1/6"],
+      ["FROID TOPPINGS", "FENOUIL", "1/6"],
+      ["FROID TOPPINGS", "RAW ILIA MIX", "1/6"],
+      ["FROID TOPPINGS", "COURGETTE", "1/6"],
+      ["FROID TOPPINGS", "NECTARINE", "1/6"],
+      ["CHAUD TOPPING", "HALLOUMAKI", "1/6"],
+      ["CHAUD TOPPING", "POULET", "1/4"],
+      ["CHAUD TOPPING", "SAUMON", "1/4"],
+      ["CHAUD TOPPING", "BOEUF SNAKE", "1/4"],
+      ["CHAUD TOPPING", "FALAFEL", "1/4"],
+      ["CHAUD TOPPING", "SHAKSHOUKA", "1/4"],
+      ["CHAUD TOPPING", "MAIS", "1/4"],
+      ["CHAUD TOPPING", "PATATE DOUCE", "1/4"],
+      ["CHAUD TOPPING", "POMME DE TERRE", "1/4"],
+      ["CHAUD TOPPING", "BROCOLINIS", "1/4"],
+      ["CHAUD TOPPING", "POIVRONS", "1/4"],
+      ["CHAUD TOPPING", "AUBERGINE", "1/4"],
+      ["SEC", "CRACKERS", "1/6"],
+      ["SEC", "AMANDES TORREFIEE", "1/6"],
+      ["SEC", "WASABI", "1/6"],
+      ["SEC", "SUMAC", "1/6"],
+      ["DESSERTS", "TAPIOCA", "1/4"],
+      ["DESSERTS", "SALADE DE FRUIT", "1/6"],
+      ["DESSERTS", "MELON", "1/6"],
+      ["DESSERTS", "BROWNIE", "1"],
+      ["DESSERTS", "COOKIES", "8"]
+    ];
+
+    const FIELDS = [
+      ["need", "Besoin service"],
+      ["unit", "Poids U"],
+      ["stock", "Stock apres service"],
+      ["prep", "A preparer J+1"]
+    ];
+
+    const state = loadState();
+    const itemsEl = document.getElementById("items");
+    const statusEl = document.getElementById("status");
+    const filterEl = document.getElementById("sectionFilter");
+
+    function todayIso() {
+      const d = new Date();
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      return d.toISOString().slice(0, 10);
+    }
+
+    function loadState() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+      } catch {
+        return {};
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const time = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+      statusEl.textContent = "Sauvegarde locale effectuee a " + time + ".";
+    }
+
+    function key(product, field) {
+      return product.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "." + field;
+    }
+
+    function buildFilters() {
+      [...new Set(PRODUCTS.map(([section]) => section))].forEach((section) => {
+        const option = document.createElement("option");
+        option.value = section;
+        option.textContent = section;
+        filterEl.appendChild(option);
+      });
+    }
+
+    function render() {
+      const selected = filterEl.value;
+      itemsEl.innerHTML = "";
+      let currentSection = "";
+      PRODUCTS
+        .filter(([section]) => !selected || section === selected)
+        .forEach(([section, product, dim]) => {
+          if (section !== currentSection) {
+            currentSection = section;
+            const title = document.createElement("div");
+            title.className = "section-title";
+            title.textContent = section;
+            itemsEl.appendChild(title);
+          }
+
+          const card = document.createElement("section");
+          card.className = "card";
+          card.dataset.product = product;
+
+          const head = document.createElement("div");
+          head.className = "card-head";
+          head.innerHTML = `<div class="product">${escapeHtml(product)}</div><div class="dim">${escapeHtml(dim)}</div>`;
+          card.appendChild(head);
+
+          const fields = document.createElement("div");
+          fields.className = "fields";
+          FIELDS.forEach(([field, labelText]) => {
+            const id = key(product, field);
+            const wrap = document.createElement("div");
+            wrap.className = "field";
+            wrap.innerHTML = `<label for="${id}">${escapeHtml(labelText)}</label><input id="${id}" inputmode="decimal" autocomplete="off" value="${escapeAttr(state[id] || "")}">`;
+            fields.appendChild(wrap);
+          });
+          card.appendChild(fields);
+          itemsEl.appendChild(card);
+        });
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+      }[char]));
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value).replace(/`/g, "&#096;");
+    }
+
+    function csvValue(value) {
+      return '"' + String(value ?? "").replace(/"/g, '""') + '"';
+    }
+
+    function exportCsv() {
+      const rows = [["Date", "Service", "Section", "Produit", "Dimension", "Besoin service", "Poids U", "Stock apres service", "A preparer J+1"]];
+      PRODUCTS.forEach(([section, product, dim]) => {
+        rows.push([
+          state.date || todayIso(),
+          state.service || "Journee",
+          section,
+          product,
+          dim,
+          state[key(product, "need")] || "",
+          state[key(product, "unit")] || "",
+          state[key(product, "stock")] || "",
+          state[key(product, "prep")] || ""
+        ]);
+      });
+      rows.push([state.date || todayIso(), state.service || "Journee", "NOTES", "Notes generales", "", state.notes || "", "", "", ""]);
+      const csv = rows.map((row) => row.map(csvValue).join(";")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "mep-washington-" + (state.date || todayIso()) + ".csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function resetDay() {
+      if (!confirm("Effacer la saisie locale et repartir sur aujourd'hui ?")) return;
+      Object.keys(state).forEach((name) => delete state[name]);
+      state.date = todayIso();
+      state.service = "Journee";
+      saveState();
+      syncInputs();
+    }
+
+    function syncInputs() {
+      document.getElementById("date").value = state.date || todayIso();
+      document.getElementById("service").value = state.service || "Journee";
+      document.getElementById("notes").value = state.notes || "";
+      document.querySelectorAll(".field input").forEach((input) => {
+        input.value = state[input.id] || "";
+      });
+    }
+
+    buildFilters();
+    if (!state.date) state.date = todayIso();
+    if (!state.service) state.service = "Journee";
+    render();
+    syncInputs();
+    saveState();
+
+    document.addEventListener("input", (event) => {
+      const target = event.target;
+      if (target.id === "date") state.date = target.value;
+      else if (target.id === "service") state.service = target.value;
+      else if (target.id === "notes") state.notes = target.value;
+      else if (target.matches(".field input")) state[target.id] = target.value;
+      saveState();
+    });
+
+    filterEl.addEventListener("change", () => {
+      render();
+      syncInputs();
+    });
+
+    document.getElementById("clearEmpty").addEventListener("click", () => {
+      document.querySelectorAll(".card").forEach((card) => {
+        const hasValue = [...card.querySelectorAll("input")].some((input) => input.value.trim());
+        card.style.display = hasValue ? "" : "none";
+      });
+    });
+
+    document.getElementById("showAll").addEventListener("click", () => {
+      document.querySelectorAll(".card").forEach((card) => card.style.display = "");
+    });
+
+    document.getElementById("exportCsv").addEventListener("click", exportCsv);
+    document.getElementById("resetDay").addEventListener("click", resetDay);
+  </script>
+</body>
+</html>
