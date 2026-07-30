@@ -224,6 +224,18 @@
         border-radius: 8px 8px 0 0;
       }
     }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
   </style>
 </head>
 <body>
@@ -267,7 +279,10 @@
 
   <div class="actions">
     <button id="exportCsv" type="button">Exporter CSV</button>
+    <button id="exportDraft" type="button">Sauver brouillon</button>
+    <button class="secondary" id="importDraft" type="button">Importer brouillon</button>
     <button class="secondary" id="resetDay" type="button">Nouveau jour</button>
+    <input class="sr-only" id="importDraftFile" type="file" accept="application/json,.json">
   </div>
 
   <script>
@@ -499,6 +514,44 @@
       URL.revokeObjectURL(url);
     }
 
+    function exportDraft() {
+      saveState();
+      const payload = {
+        kind: "ilia-mep-draft",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        state
+      };
+      const json = JSON.stringify(payload, null, 2);
+      const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "brouillon-mep-" + (state.currentShop || "ilia").toLowerCase() + "-" + todayIso() + ".json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importDraftFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const payload = JSON.parse(reader.result);
+          const imported = normalizeState(payload.state || payload);
+          if (!confirm("Remplacer les brouillons locaux par ce fichier ?")) return;
+          Object.keys(state).forEach((name) => delete state[name]);
+          Object.assign(state, imported);
+          render();
+          syncInputs();
+          saveState();
+        } catch {
+          alert("Impossible de lire ce fichier brouillon.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
     function resetDay() {
       if (!confirm("Effacer le brouillon de ce shop et repartir sur aujourd'hui ?")) return;
       state.shops[state.currentShop || "Washington"] = {
@@ -572,6 +625,14 @@
     });
 
     document.getElementById("exportCsv").addEventListener("click", exportCsv);
+    document.getElementById("exportDraft").addEventListener("click", exportDraft);
+    document.getElementById("importDraft").addEventListener("click", () => {
+      document.getElementById("importDraftFile").click();
+    });
+    document.getElementById("importDraftFile").addEventListener("change", (event) => {
+      importDraftFile(event.target.files[0]);
+      event.target.value = "";
+    });
     document.getElementById("resetDay").addEventListener("click", resetDay);
   </script>
 </body>
