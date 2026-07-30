@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Mise en place Washington</title>
+  <title>Mise en place ILIA</title>
   <style>
     :root {
       color-scheme: light;
@@ -51,6 +51,10 @@
       grid-template-columns: 1fr 1fr;
       gap: 8px;
       align-items: end;
+    }
+
+    .shop-field {
+      grid-column: 1 / -1;
     }
 
     label {
@@ -224,8 +228,12 @@
 </head>
 <body>
   <header>
-    <h1>Mise en place Washington</h1>
+    <h1>Mise en place ILIA</h1>
     <div class="top-grid">
+      <div class="shop-field">
+        <label for="shop">Shop</label>
+        <select id="shop"></select>
+      </div>
       <div>
         <label for="date">Date du jour</label>
         <input id="date" type="date">
@@ -264,6 +272,7 @@
 
   <script>
     const STORAGE_KEY = "ilia-mep-washington-v1";
+    const SHOPS = ["Washington", "Vernier", "Casanova", "Mathurins", "Riviere"];
     const PRODUCTS = [
       ["BASE FROIDE", "QUINOA", "1/3"],
       ["BASE FROIDE", "TABOULEH", "1/3"],
@@ -330,6 +339,7 @@
     const itemsEl = document.getElementById("items");
     const statusEl = document.getElementById("status");
     const filterEl = document.getElementById("sectionFilter");
+    const shopEl = document.getElementById("shop");
 
     function todayIso() {
       const d = new Date();
@@ -348,7 +358,7 @@
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       const time = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-      statusEl.textContent = "Sauvegarde locale effectuee a " + time + ".";
+      statusEl.textContent = "Brouillon enregistre localement a " + time + ".";
     }
 
     function key(product, field) {
@@ -356,6 +366,13 @@
     }
 
     function buildFilters() {
+      SHOPS.forEach((shop) => {
+        const option = document.createElement("option");
+        option.value = shop;
+        option.textContent = shop;
+        shopEl.appendChild(option);
+      });
+
       [...new Set(PRODUCTS.map(([section]) => section))].forEach((section) => {
         const option = document.createElement("option");
         option.value = section;
@@ -417,10 +434,11 @@
     }
 
     function exportCsv() {
-      const rows = [["Date", "Service", "Section", "Produit", "Dimension", "Besoin service", "Poids U", "Stock apres service", "A preparer J+1"]];
+      const rows = [["Date", "Shop", "Service", "Section", "Produit", "Dimension", "Besoin service", "Poids U", "Stock apres service", "A preparer J+1"]];
       PRODUCTS.forEach(([section, product, dim]) => {
         rows.push([
           state.date || todayIso(),
+          state.shop || "Washington",
           state.service || "Journee",
           section,
           product,
@@ -431,20 +449,22 @@
           state[key(product, "prep")] || ""
         ]);
       });
-      rows.push([state.date || todayIso(), state.service || "Journee", "NOTES", "Notes generales", "", state.notes || "", "", "", ""]);
+      rows.push([state.date || todayIso(), state.shop || "Washington", state.service || "Journee", "NOTES", "Notes generales", "", state.notes || "", "", "", ""]);
       const csv = rows.map((row) => row.map(csvValue).join(";")).join("\n");
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "mep-washington-" + (state.date || todayIso()) + ".csv";
+      a.download = "mep-" + (state.shop || "Washington").toLowerCase() + "-" + (state.date || todayIso()) + ".csv";
       a.click();
       URL.revokeObjectURL(url);
     }
 
     function resetDay() {
       if (!confirm("Effacer la saisie locale et repartir sur aujourd'hui ?")) return;
+      const shop = state.shop || "Washington";
       Object.keys(state).forEach((name) => delete state[name]);
+      state.shop = shop;
       state.date = todayIso();
       state.service = "Journee";
       saveState();
@@ -452,6 +472,7 @@
     }
 
     function syncInputs() {
+      document.getElementById("shop").value = state.shop || "Washington";
       document.getElementById("date").value = state.date || todayIso();
       document.getElementById("service").value = state.service || "Journee";
       document.getElementById("notes").value = state.notes || "";
@@ -461,6 +482,7 @@
     }
 
     buildFilters();
+    if (!state.shop) state.shop = "Washington";
     if (!state.date) state.date = todayIso();
     if (!state.service) state.service = "Journee";
     render();
@@ -469,7 +491,8 @@
 
     document.addEventListener("input", (event) => {
       const target = event.target;
-      if (target.id === "date") state.date = target.value;
+      if (target.id === "shop") state.shop = target.value;
+      else if (target.id === "date") state.date = target.value;
       else if (target.id === "service") state.service = target.value;
       else if (target.id === "notes") state.notes = target.value;
       else if (target.matches(".field input")) state[target.id] = target.value;
