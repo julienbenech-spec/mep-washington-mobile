@@ -335,7 +335,7 @@
       ["prep", "A preparer J+1"]
     ];
 
-    const state = loadState();
+    const state = normalizeState(loadState());
     const itemsEl = document.getElementById("items");
     const statusEl = document.getElementById("status");
     const filterEl = document.getElementById("sectionFilter");
@@ -355,10 +355,48 @@
       }
     }
 
+    function normalizeState(raw) {
+      if (raw && raw.shops && raw.currentShop) return raw;
+
+      const currentShop = raw.shop || "Washington";
+      const draft = {
+        date: raw.date || todayIso(),
+        service: raw.service || "Journee",
+        notes: raw.notes || "",
+        values: {}
+      };
+
+      PRODUCTS.forEach(([, product]) => {
+        FIELDS.forEach(([field]) => {
+          const id = key(product, field);
+          if (raw[id]) draft.values[id] = raw[id];
+        });
+      });
+
+      return {
+        currentShop,
+        shops: { [currentShop]: draft }
+      };
+    }
+
+    function currentDraft() {
+      const shop = state.currentShop || "Washington";
+      if (!state.shops) state.shops = {};
+      if (!state.shops[shop]) {
+        state.shops[shop] = {
+          date: todayIso(),
+          service: "Journee",
+          notes: "",
+          values: {}
+        };
+      }
+      return state.shops[shop];
+    }
+
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       const time = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-      statusEl.textContent = "Brouillon enregistre localement a " + time + ".";
+      statusEl.textContent = "Brouillon " + (state.currentShop || "Washington") + " enregistre a " + time + ".";
     }
 
     function key(product, field) {
@@ -411,7 +449,7 @@
             const id = key(product, field);
             const wrap = document.createElement("div");
             wrap.className = "field";
-            wrap.innerHTML = `<label for="${id}">${escapeHtml(labelText)}</label><input id="${id}" inputmode="decimal" autocomplete="off" value="${escapeAttr(state[id] || "")}">`;
+            wrap.innerHTML = `<label for="${id}">${escapeHtml(labelText)}</label><input id="${id}" inputmode="decimal" autocomplete="off" value="${escapeAttr(currentDraft().values[id] || "")}">`;
             fields.appendChild(wrap);
           });
           card.appendChild(fields);
@@ -434,68 +472,86 @@
     }
 
     function exportCsv() {
+      const draft = currentDraft();
       const rows = [["Date", "Shop", "Service", "Section", "Produit", "Dimension", "Besoin service", "Poids U", "Stock apres service", "A preparer J+1"]];
       PRODUCTS.forEach(([section, product, dim]) => {
         rows.push([
-          state.date || todayIso(),
-          state.shop || "Washington",
-          state.service || "Journee",
+          draft.date || todayIso(),
+          state.currentShop || "Washington",
+          draft.service || "Journee",
           section,
           product,
           dim,
-          state[key(product, "need")] || "",
-          state[key(product, "unit")] || "",
-          state[key(product, "stock")] || "",
-          state[key(product, "prep")] || ""
+          draft.values[key(product, "need")] || "",
+          draft.values[key(product, "unit")] || "",
+          draft.values[key(product, "stock")] || "",
+          draft.values[key(product, "prep")] || ""
         ]);
       });
-      rows.push([state.date || todayIso(), state.shop || "Washington", state.service || "Journee", "NOTES", "Notes generales", "", state.notes || "", "", "", ""]);
+      rows.push([draft.date || todayIso(), state.currentShop || "Washington", draft.service || "Journee", "NOTES", "Notes generales", "", draft.notes || "", "", "", ""]);
       const csv = rows.map((row) => row.map(csvValue).join(";")).join("\n");
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "mep-" + (state.shop || "Washington").toLowerCase() + "-" + (state.date || todayIso()) + ".csv";
+      a.download = "mep-" + (state.currentShop || "Washington").toLowerCase() + "-" + (draft.date || todayIso()) + ".csv";
       a.click();
       URL.revokeObjectURL(url);
     }
 
     function resetDay() {
-      if (!confirm("Effacer la saisie locale et repartir sur aujourd'hui ?")) return;
-      const shop = state.shop || "Washington";
-      Object.keys(state).forEach((name) => delete state[name]);
-      state.shop = shop;
-      state.date = todayIso();
-      state.service = "Journee";
+      if (!confirm("Effacer le brouillon de ce shop et repartir sur aujourd'hui ?")) return;
+      state.shops[state.currentShop || "Washington"] = {
+        date: todayIso(),
+        service: "Journee",
+        notes: "",
+        values: {}
+      };
       saveState();
       syncInputs();
     }
 
     function syncInputs() {
-      document.getElementById("shop").value = state.shop || "Washington";
-      document.getElementById("date").value = state.date || todayIso();
-      document.getElementById("service").value = state.service || "Journee";
-      document.getElementById("notes").value = state.notes || "";
+      const draft = currentDraft();
+      document.getElementById("shop").value = state.currentShop || "Washington";
+      document.getElementById("date").value = draft.date || todayIso();
+      document.getElementById("service").value = draft.service || "Journee";
+      document.getElementById("notes").value = draft.notes || "";
       document.querySelectorAll(".field input").forEach((input) => {
-        input.value = state[input.id] || "";
+        input.value = draft.values[input.id] || "";
       });
     }
 
     buildFilters();
-    if (!state.shop) state.shop = "Washington";
-    if (!state.date) state.date = todayIso();
-    if (!state.service) state.service = "Journee";
+    if (!state.currentShop) state.currentShop = "Washington";
+    currentDraft();
     render();
     syncInputs();
     saveState();
 
     document.addEventListener("input", (event) => {
       const target = event.target;
-      if (target.id === "shop") state.shop = target.value;
-      else if (target.id === "date") state.date = target.value;
-      else if (target.id === "service") state.service = target.value;
-      else if (target.id === "notes") state.notes = target.value;
-      else if (target.matches(".field input")) state[target.id] = target.value;
+      const draft = currentDraft();
+      if (target.id === "shop") {
+        state.currentShop = target.value;
+        currentDraft();
+        syncInputs();
+      } else if (target.id === "date") {
+        draft.date = target.value;
+      } else if (target.id === "service") {
+        draft.service = target.value;
+      } else if (target.id === "notes") {
+        draft.notes = target.value;
+      } else if (target.matches(".field input")) {
+        draft.values[target.id] = target.value;
+      }
+      saveState();
+    });
+
+    shopEl.addEventListener("change", () => {
+      state.currentShop = shopEl.value;
+      currentDraft();
+      syncInputs();
       saveState();
     });
 
